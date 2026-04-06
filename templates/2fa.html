@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head><title>Autenticação de Dois Fatores</title></head>
+<body style="font-family: Arial; padding: 20px;">
+    <h2>Verificação 2FA</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <p style="color: red;">{{ message }}</p>
+        {% endfor %}
+    {% endwith %}
+    
+    <form method="POST">
+        <label>Insira o código de 6 dígitos gerado pelo seu aplicativo (ex: Authy/Google Authenticator):</label><br><br>
+        <input type="text" name="otp_code" required maxlength="6"><br><br>
+        <button type="submit">Verificar</button>
+    </form>
+</body>
+</html>
