@@ -9,27 +9,26 @@ from datetime import datetime, timedelta
 from cryptography.fernet import Fernet
 
 app = Flask(__name__)
-# Chave segura para as sessões do Flask
+# Chave segura sessões do Flask
 app.secret_key = secrets.token_urlsafe(32)
-# Req 1.9: Sessões com tempo de expiração (30 min)
+# Sessões com tempo de expiração (30 min)
 app.permanent_session_lifetime = timedelta(minutes=30)
 
-# Configuração do Banco de Dados SQLite
+# Banco de Dados SQLite
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Req 2.6 e 2.7: Configuração de logs de auditoria
+# logs de auditoria
 logging.basicConfig(filename='security_audit.log', level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-# --- CONFIGURAÇÕES DE CRIPTOGRAFIA (Req 3.4, 3.5, 3.6) ---
+# --- CONFIGURAÇÕES DE CRIPTOGRAFIA 
 # CHAVE FIXA DEFINIDA PARA NÃO PERDER ACESSO AOS DADOS NO BANCO!
-# Em um ambiente real, esta chave deve ser carregada de uma variável de ambiente (.env)
 ENCRYPTION_KEY = b'T4x_ExemploDeChaveGeradaPeloTerminal='
 ENCRYPTION_KEY = b'MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI='
 
-# --- MODELOS DE BANCO DE DADOS ---
+# --- MODELOS DE BANCO DE DADOS 
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -50,7 +49,7 @@ class RecoveryToken(db.Model):
 with app.app_context():
     db.create_all()
 
-# --- ROTAS DE AUTENTICAÇÃO ---
+# --- ROTAS DE AUTENTICAÇÃO 
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -64,11 +63,11 @@ def login():
                 flash('Usuário já existe.', 'danger')
                 return redirect(url_for('login'))
 
-            # Req 1.1 a 1.4: Bcrypt com salt único e custo justificado (12)
+            # Bcrypt com salt único e custo justificado (12)
             salt = bcrypt.gensalt(rounds=12)
             hashed_pw = bcrypt.hashpw(password.encode('utf-8'), salt)
             
-            # Req 1.5: Gerar segredo para 2FA
+            # Gerar segredo 2FA
             totp_secret = pyotp.random_base32()
             
             new_user = User(username=username, password_hash=hashed_pw, totp_secret=totp_secret)
@@ -82,7 +81,7 @@ def login():
             user = User.query.filter_by(username=username).first()
             
             if user:
-                # Req 1.11: Proteção contra força bruta
+                # Proteção contra força bruta
                 if time.time() < user.lock_until:
                     flash('Conta bloqueada temporariamente.', 'danger')
                     return render_template('login.html')
@@ -104,7 +103,7 @@ def login():
 
 @app.route('/2fa', methods=['GET', 'POST'])
 def verify_2fa():
-    # Req 1.6: Validação do 2FA após autenticação primária
+    # Validação do 2FA após autenticação primária
     if 'temp_user_id' not in session:
         return redirect(url_for('login'))
     
@@ -126,12 +125,12 @@ def verify_2fa():
 
 @app.route('/logout')
 def logout():
-    # Req 1.10: Invalidação de sessão no logout
+    # Invalidação de sessão no logout
     session.clear()
     flash('Sessão encerrada com segurança.', 'info')
     return redirect(url_for('login'))
 
-# --- ROTAS DE RECUPERAÇÃO DE SENHA ---
+# --- ROTAS DE RECUPERAÇÃO DE SENHA 
 
 @app.route('/recuperar', methods=['GET', 'POST'])
 def recuperar():
@@ -140,7 +139,7 @@ def recuperar():
         user = User.query.filter_by(username=username).first()
         
         if user:
-            # Req 2.2 e 2.3: Gera token seguro com expiração de 15 min
+            # Gera token seguro com expiração de 15 min
             token = secrets.token_urlsafe(32)
             expires = datetime.now() + timedelta(minutes=15)
             
@@ -164,7 +163,7 @@ def reset_password(token):
         flash('Token inválido.', 'danger')
         return redirect(url_for('login'))
         
-    # Req 2.5: Falha correta para token expirado
+    # Falha correta para token expirado
     if datetime.now() > recovery.expires_at:
         db.session.delete(recovery)
         db.session.commit()
@@ -179,7 +178,7 @@ def reset_password(token):
         salt = bcrypt.gensalt(rounds=12)
         user.password_hash = bcrypt.hashpw(new_password.encode('utf-8'), salt)
         
-        # Req 2.4: Deleta o token após o uso
+        # Deleta o token após o uso
         db.session.delete(recovery)
         db.session.commit()
         
@@ -189,7 +188,7 @@ def reset_password(token):
         
     return render_template('recuperar.html', reset_mode=True)
 
-# --- ÁREA LOGADA ---
+# --- ÁREA LOGADA 
 
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
@@ -201,7 +200,7 @@ def dashboard():
 
     if request.method == 'POST':
         dado_sensivel = request.form.get('dado_sensivel')
-        # Req 3.4 e 3.5: Criptografia em repouso (AES)
+        # Criptografia em repouso 
         user.encrypted_data = cipher_suite.encrypt(dado_sensivel.encode('utf-8'))
         db.session.commit()
         mensagem = "Dado salvo de forma segura no Banco de Dados!"
@@ -217,12 +216,12 @@ def dashboard():
                            mensagem=mensagem)
 
 if __name__ == '__main__':
-    # Print customizado para o terminal
+    # Print para o terminal
     print("\n" + "="*55)
     print("🚀 SISTEMA DE SEGURANÇA INICIADO COM SUCESSO!")
     print("👉 SEGURE 'CTRL' E CLIQUE NO LINK ABAIXO PARA ACESSAR:")
     print("🔗 https://127.0.0.1:5000/")
     print("="*55 + "\n")
     
-    # Req 3.1, 3.2 e 3.3: Comunicação HTTPS (TLS)
+    # Comunicação HTTPS (TLS)
     app.run(debug=True, ssl_context='adhoc', port=5000)
