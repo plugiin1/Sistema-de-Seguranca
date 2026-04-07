@@ -1,5 +1,4 @@
 __pycache__/
-instance/
-database.db
+firebase-key.json
 security_audit.log
 *.env

@@ -1,55 +1,61 @@
 from flask import Flask, render_template, request, session, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy
 import bcrypt
-import pyotp
 import secrets
 import logging
 import time
-from datetime import datetime, timedelta
-from cryptography.fernet import Fernet
+import re
+import smtplib
+from email.mime.text import MIMEText
+from datetime import datetime, timedelta, timezone
+from markupsafe import Markup
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 app = Flask(__name__)
-# Chave segura sessões do Flask
 app.secret_key = secrets.token_urlsafe(32)
-# Sessões com tempo de expiração (30 min)
 app.permanent_session_lifetime = timedelta(minutes=30)
 
-# Banco de Dados SQLite
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+# --- CONFIGURAÇÕES DO E-MAIL ---
+EMAIL_REMETENTE = 'jcmcs312@gmail.com'
+SENHA_APP = 'pxqf aaat uewd yuwx'
 
-# logs de auditoria
+# --- INICIALIZAÇÃO DO FIREBASE ---
+try:
+    cred = credentials.Certificate("firebase-key.json")
+    firebase_admin.initialize_app(cred)
+    db = firestore.client()
+except Exception as e:
+    print(f"Erro ao conectar com o Firebase: {e}")
+
 logging.basicConfig(filename='security_audit.log', level=logging.INFO, 
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
-# --- CONFIGURAÇÕES DE CRIPTOGRAFIA 
-# CHAVE FIXA DEFINIDA PARA NÃO PERDER ACESSO AOS DADOS NO BANCO!
-ENCRYPTION_KEY = b'T4x_ExemploDeChaveGeradaPeloTerminal='
-ENCRYPTION_KEY = b'MTIzNDU2Nzg5MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTI='
+# --- FUNÇÕES AUXILIARES DE SEGURANÇA ---
+def is_password_strong(password):
+    if len(password) < 8: return False
+    if not re.search(r"[a-z]", password): return False
+    if not re.search(r"[A-Z]", password): return False
+    if not re.search(r"[0-9]", password): return False
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password): return False
+    return True
 
-# --- MODELOS DE BANCO DE DADOS 
+def enviar_email_2fa(destinatario, codigo, assunto="Seu Código de Segurança"):
+    msg = MIMEText(f"Olá!\n\nSeu código de verificação é: {codigo}\n\nEste código expira em 10 minutos.")
+    msg['Subject'] = assunto
+    msg['From'] = EMAIL_REMETENTE
+    msg['To'] = destinatario
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password_hash = db.Column(db.LargeBinary, nullable=False)
-    totp_secret = db.Column(db.String(32), nullable=False)
-    encrypted_data = db.Column(db.LargeBinary, nullable=True)
-    failed_attempts = db.Column(db.Integer, default=0)
-    lock_until = db.Column(db.Float, default=0.0)
+    try:
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(EMAIL_REMETENTE, SENHA_APP)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Erro no envio do e-mail: {e}")
+        return False
 
-class RecoveryToken(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    token = db.Column(db.String(64), unique=True, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    expires_at = db.Column(db.DateTime, nullable=False)
-
-# Cria as tabelas no banco de dados (se não existirem)
-with app.app_context():
-    db.create_all()
-
-# --- ROTAS DE AUTENTICAÇÃO 
+# --- AUTENTICAÇÃO ---
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -57,98 +63,193 @@ def login():
         action = request.form.get('action')
         username = request.form.get('username')
         password = request.form.get('password')
+        
+        user_ref = db.collection('users').document(username)
 
         if action == 'register':
-            if User.query.filter_by(username=username).first():
+            email = request.form.get('email')
+            confirm_password = request.form.get('confirm_password')
+            
+            if password != confirm_password:
+                flash('As senhas não coincidem. Tente novamente.', 'danger')
+                return redirect(url_for('login'))
+                
+            if not is_password_strong(password):
+                flash('Sua senha é fraca. Ela deve ter no mínimo 8 caracteres, incluindo maiúsculas, minúsculas, números e símbolos.', 'danger')
+                return redirect(url_for('login'))
+
+            if user_ref.get().exists:
                 flash('Usuário já existe.', 'danger')
                 return redirect(url_for('login'))
 
-            # Bcrypt com salt único e custo justificado (12)
             salt = bcrypt.gensalt(rounds=12)
-            hashed_pw = bcrypt.hashpw(password.encode('utf-8'), salt)
+            hashed_pw = bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
             
-            # Gerar segredo 2FA
-            totp_secret = pyotp.random_base32()
+            # GERA O CÓDIGO NO CADASTRO
+            codigo = str(secrets.randbelow(900000) + 100000)
+            expiracao = datetime.now(timezone.utc) + timedelta(minutes=10)
             
-            new_user = User(username=username, password_hash=hashed_pw, totp_secret=totp_secret)
-            db.session.add(new_user)
-            db.session.commit()
-            
-            flash(f'Conta criada! Anote seu código 2FA: {totp_secret}', 'success')
-            return redirect(url_for('login'))
+            if enviar_email_2fa(email, codigo, "Ative sua conta - Sistema Seguro"):
+                db.collection('pending_users').document(username).set({
+                    'username': username,
+                    'email': email,
+                    'password_hash': hashed_pw,
+                    'codigo_2fa': codigo,
+                    'expiracao_2fa': expiracao
+                })
+                session['temp_reg_username'] = username
+                flash('Enviamos um código para o seu e-mail. Verifique para concluir o cadastro!', 'info')
+                return redirect(url_for('ativar_conta'))
+            else:
+                flash('Erro ao enviar o e-mail de verificação. Tente novamente.', 'danger')
+                return redirect(url_for('login'))
 
         elif action == 'login':
-            user = User.query.filter_by(username=username).first()
+            user_doc = user_ref.get()
             
-            if user:
-                # Proteção contra força bruta
-                if time.time() < user.lock_until:
-                    flash('Conta bloqueada temporariamente.', 'danger')
+            if user_doc.exists:
+                user_data = user_doc.to_dict()
+                
+                if time.time() < user_data.get('lock_until', 0):
+                    flash('Conta bloqueada temporariamente devido a múltiplas tentativas.', 'danger')
                     return render_template('login.html')
 
-                if bcrypt.checkpw(password.encode('utf-8'), user.password_hash):
-                    user.failed_attempts = 0
-                    db.session.commit()
-                    session['temp_user_id'] = user.id
+                saved_hash = user_data['password_hash'].encode('utf-8')
+                
+                if bcrypt.checkpw(password.encode('utf-8'), saved_hash):
+                    user_ref.update({'failed_attempts': 0})
+                    
+                    # Gera código para o Login
+                    codigo = str(secrets.randbelow(900000) + 100000)
+                    expiracao = datetime.now(timezone.utc) + timedelta(minutes=10)
+                    
+                    user_ref.update({'codigo_2fa': codigo, 'expiracao_2fa': expiracao})
+                    enviar_email_2fa(user_data['email'], codigo, "Código de Login - Sistema Seguro")
+                    
+                    session['temp_username'] = username
                     return redirect(url_for('verify_2fa'))
                 else:
-                    user.failed_attempts += 1
-                    time.sleep(1) # Atraso para mitigar força bruta
-                    if user.failed_attempts >= 3:
-                        user.lock_until = time.time() + 60
-                    db.session.commit()
+                    falhas = user_data.get('failed_attempts', 0) + 1
+                    time.sleep(1) 
+                    update_data = {'failed_attempts': falhas}
+                    if falhas >= 3:
+                        update_data['lock_until'] = time.time() + 60
+                    user_ref.update(update_data)
+                    
             flash('Usuário ou senha inválidos.', 'danger')
 
     return render_template('login.html')
 
+# --- VERIFICAÇÃO DE CADASTRO ---
+@app.route('/ativar_conta', methods=['GET', 'POST'])
+def ativar_conta():
+    if 'temp_reg_username' not in session:
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        username = session['temp_reg_username']
+        otp_digitado = request.form.get('otp_code')
+        
+        pending_ref = db.collection('pending_users').document(username)
+        pending_doc = pending_ref.get()
+        
+        if pending_doc.exists:
+            data = pending_doc.to_dict()
+            
+            if datetime.now(timezone.utc) <= data['expiracao_2fa']:
+                if otp_digitado == data['codigo_2fa']:
+                    # Move para a coleção de usuários reais
+                    db.collection('users').document(username).set({
+                        'username': data['username'],
+                        'email': data['email'],
+                        'password_hash': data['password_hash'],
+                        'failed_attempts': 0,
+                        'lock_until': 0.0,
+                        'codigo_2fa': None,
+                        'expiracao_2fa': None
+                    })
+                    pending_ref.delete() # Remove da sala de espera
+                    session.pop('temp_reg_username')
+                    flash('Conta ativada com sucesso! Você já pode fazer login.', 'success')
+                    return redirect(url_for('login'))
+                else:
+                    flash('Código incorreto.', 'danger')
+            else:
+                pending_ref.delete()
+                flash('O código expirou. Você precisa refazer o cadastro.', 'danger')
+                return redirect(url_for('login'))
+        else:
+            flash('Dados de cadastro não encontrados. Tente novamente.', 'danger')
+            return redirect(url_for('login'))
+
+    return render_template('ativar_conta.html')
+
+# --- 2FA (LOGIN) ---
 @app.route('/2fa', methods=['GET', 'POST'])
 def verify_2fa():
-    # Validação do 2FA após autenticação primária
-    if 'temp_user_id' not in session:
+    if 'temp_username' not in session:
         return redirect(url_for('login'))
     
     if request.method == 'POST':
-        otp_code = request.form.get('otp_code')
-        user = User.query.get(session['temp_user_id'])
+        username = session['temp_username']
+        otp_digitado = request.form.get('otp_code')
         
-        totp = pyotp.TOTP(user.totp_secret)
-        if totp.verify(otp_code):
-            session.pop('temp_user_id')
-            session.permanent = True # Ativa a expiração
-            session['user_id'] = user.id
-            logging.info(f"Login bem-sucedido: {user.username}")
-            return redirect(url_for('dashboard'))
+        user_ref = db.collection('users').document(username)
+        user_data = user_ref.get().to_dict()
+        
+        codigo_salvo = user_data.get('codigo_2fa')
+        expiracao = user_data.get('expiracao_2fa')
+        
+        if codigo_salvo and expiracao:
+            if datetime.now(timezone.utc) <= expiracao:
+                if otp_digitado == codigo_salvo:
+                    user_ref.update({'codigo_2fa': None, 'expiracao_2fa': None})
+                    session.pop('temp_username')
+                    session.permanent = True 
+                    session['username'] = username
+                    return redirect(url_for('dashboard'))
+                else:
+                    flash('Código incorreto.', 'danger')
+            else:
+                flash('O código expirou. Faça login novamente para receber outro.', 'danger')
         else:
-            flash('Código 2FA inválido.', 'danger')
+            flash('Nenhum código ativo encontrado. Faça login novamente.', 'danger')
             
     return render_template('2fa.html')
 
 @app.route('/logout')
 def logout():
-    # Invalidação de sessão no logout
     session.clear()
     flash('Sessão encerrada com segurança.', 'info')
     return redirect(url_for('login'))
 
-# --- ROTAS DE RECUPERAÇÃO DE SENHA 
-
+# --- RECUPERAÇÃO DE SENHA ---
 @app.route('/recuperar', methods=['GET', 'POST'])
 def recuperar():
     if request.method == 'POST':
         username = request.form.get('username')
-        user = User.query.filter_by(username=username).first()
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get() # Busca os dados para pegar o e-mail
         
-        if user:
-            # Gera token seguro com expiração de 15 min
+        if user_doc.exists:
+            user_data = user_doc.to_dict()
+            
+            # Gera o token do link
             token = secrets.token_urlsafe(32)
-            expires = datetime.now() + timedelta(minutes=15)
+            expires = datetime.now(timezone.utc) + timedelta(minutes=15)
             
-            novo_token = RecoveryToken(token=token, user_id=user.id, expires_at=expires)
-            db.session.add(novo_token)
-            db.session.commit()
+            # Gera o código OTP e envia por e-mail
+            codigo = str(secrets.randbelow(900000) + 100000)
+            enviar_email_2fa(user_data['email'], codigo, "Código de Recuperação de Senha")
             
-            logging.info(f"Req 2.6: Solicitação de recuperação gerada para {username}")
-            flash(f'Acesse este link para resetar: https://127.0.0.1:5000/reset/{token}', 'success')
+            # Salva o token E o código no banco de dados
+            db.collection('recovery_tokens').document(token).set({
+                'username': username,
+                'expires_at': expires,
+                'codigo_2fa': codigo
+            })
+            
+            flash(Markup(f'Link gerado! <a href="/reset/{token}" class="alert-link text-decoration-underline fw-bold">Clique aqui para redefinir sua senha</a>'), 'success')
         else:
             flash('Se o usuário existir, um link foi gerado.', 'info') 
             
@@ -156,72 +257,57 @@ def recuperar():
 
 @app.route('/reset/<token>', methods=['GET', 'POST'])
 def reset_password(token):
-    recovery = RecoveryToken.query.filter_by(token=token).first()
+    token_ref = db.collection('recovery_tokens').document(token)
+    token_doc = token_ref.get()
     
-    if not recovery:
-        logging.error("Req 2.7: Falha - Tentativa com token inexistente.")
+    if not token_doc.exists:
         flash('Token inválido.', 'danger')
         return redirect(url_for('login'))
         
-    # Falha correta para token expirado
-    if datetime.now() > recovery.expires_at:
-        db.session.delete(recovery)
-        db.session.commit()
-        logging.error(f"Req 2.7: Falha - Token expirado.")
+    token_data = token_doc.to_dict()
+    
+    if datetime.now(timezone.utc) > token_data['expires_at']:
+        token_ref.delete()
         flash('O token expirou. Solicite um novo.', 'danger')
         return redirect(url_for('recuperar'))
         
     if request.method == 'POST':
+        otp_digitado = request.form.get('otp_code') 
         new_password = request.form.get('password')
-        user = User.query.get(recovery.user_id)
+        confirm_password = request.form.get('confirm_password')
+        username = token_data['username']
         
+        # Verifica se o código do e-mail está certo
+        if otp_digitado != token_data.get('codigo_2fa'):
+            flash('Código de verificação incorreto.', 'danger')
+            return render_template('recuperar.html', reset_mode=True)
+        
+        if new_password != confirm_password:
+            flash('As senhas não coincidem.', 'danger')
+            return render_template('recuperar.html', reset_mode=True)
+            
+        if not is_password_strong(new_password):
+            flash('A nova senha é fraca.', 'danger')
+            return render_template('recuperar.html', reset_mode=True)
+        
+        # Se estiver certa! Atualiza a senha no banco
         salt = bcrypt.gensalt(rounds=12)
-        user.password_hash = bcrypt.hashpw(new_password.encode('utf-8'), salt)
+        new_hash = bcrypt.hashpw(new_password.encode('utf-8'), salt).decode('utf-8')
         
-        # Deleta o token após o uso
-        db.session.delete(recovery)
-        db.session.commit()
+        db.collection('users').document(username).update({'password_hash': new_hash})
+        token_ref.delete()
         
-        logging.info(f"Req 2.7: Sucesso - Senha alterada para ID {user.id}")
         flash('Senha atualizada com sucesso!', 'success')
         return redirect(url_for('login'))
         
     return render_template('recuperar.html', reset_mode=True)
 
-# --- ÁREA LOGADA 
-
-@app.route('/dashboard', methods=['GET', 'POST'])
+# --- ÁREA LOGADA ---
+@app.route('/dashboard')
 def dashboard():
-    if 'user_id' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
-    
-    user = User.query.get(session['user_id'])
-    mensagem = ""
-
-    if request.method == 'POST':
-        dado_sensivel = request.form.get('dado_sensivel')
-        # Criptografia em repouso 
-        user.encrypted_data = cipher_suite.encrypt(dado_sensivel.encode('utf-8'))
-        db.session.commit()
-        mensagem = "Dado salvo de forma segura no Banco de Dados!"
-
-    dado_descriptografado = ""
-    if user.encrypted_data:
-        dado_descriptografado = cipher_suite.decrypt(user.encrypted_data).decode('utf-8')
-
-    return render_template('dashboard.html', 
-                           username=user.username, 
-                           dado_salvo=user.encrypted_data,
-                           dado_limpo=dado_descriptografado,
-                           mensagem=mensagem)
+    return render_template('dashboard.html', username=session['username'])
 
 if __name__ == '__main__':
-    # Print para o terminal
-    print("\n" + "="*55)
-    print("🚀 SISTEMA DE SEGURANÇA INICIADO COM SUCESSO!")
-    print("👉 SEGURE 'CTRL' E CLIQUE NO LINK ABAIXO PARA ACESSAR:")
-    print("🔗 https://127.0.0.1:5000/")
-    print("="*55 + "\n")
-    
-    # Comunicação HTTPS (TLS)
     app.run(debug=True, ssl_context='adhoc', port=5000)
