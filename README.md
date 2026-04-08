@@ -21,11 +21,11 @@ Este repositório contém o código-fonte do meu **Projeto de Final de Curso (PF
 > **Nota:** Adicione prints do seu sistema aqui!
 > 
 > *Coloque as imagens na pasta do projeto e substitua os links abaixo:*
-> - `![Tela de Login]`
+> - `[Tela de Login]`
 > - <img width="580" height="766" alt="login" src="https://github.com/user-attachments/assets/61a19946-df47-454b-8fdd-95ff825e711e" />
-> - `![Tela de 2FA]`
+> - `[Tela de 2FA]`
 > - <img width="503" height="720" alt="2fa" src="https://github.com/user-attachments/assets/3820ebe3-5768-4771-acd0-3c7822ef4193" />
-> - `![Dashboard]`
+> - `[Dashboard]`
 > - <img width="1919" height="953" alt="dashboard" src="https://github.com/user-attachments/assets/9b61384c-8e30-48d0-98d1-f90f47f03f1e" />
 
 
