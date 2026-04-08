@@ -3,131 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acesso Restrito - Segurança</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Acesso Seguro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
     <style>
-        body { 
-            background-color: #f0f2f5; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #F7F6F3; --surface: #FFFFFF; --border: rgba(0,0,0,0.08);
+            --border-strong: rgba(0,0,0,0.25); --text-primary: #1A1917;
+            --text-muted: #8A8880; --accent: #1A1917; --input-bg: #FAFAF8;
         }
-        .auth-card { 
-            width: 100%;
-            max-width: 450px; 
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        .nav-tabs .nav-link {
-            color: #6c757d;
-            border: none;
-            padding: 15px;
-            font-size: 1.1rem;
-        }
-        .nav-tabs .nav-link.active {
-            font-weight: bold;
-            color: #0d6efd;
-            border-bottom: 3px solid #0d6efd;
-            background-color: transparent;
-        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; -webkit-font-smoothing: antialiased; }
+        .wrapper { width: 100%; max-width: 420px; }
+        .brand { text-align: center; margin-bottom: 2.5rem; }
+        .brand-icon { width: 48px; height: 48px; margin: 0 auto 1rem; background: var(--accent); border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+        .brand-icon svg { width: 22px; height: 22px; stroke: white; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .brand-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text-primary); letter-spacing: -0.01em; }
+        .brand-sub { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.25rem; letter-spacing: 0.04em; text-transform: uppercase; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 1.5rem; }
+        .tab-btn { flex: 1; background: none; border: none; padding: 1.125rem 0; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 400; color: var(--text-muted); cursor: pointer; position: relative; transition: color 0.2s; }
+        .tab-btn.active { color: var(--text-primary); font-weight: 500; }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 1.5px; background: var(--accent); }
+        .tab-content { padding: 2rem 1.75rem; }
+        .pane { display: none; }
+        .pane.active { display: block; animation: fadeUp 0.25s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .pane-heading { margin-bottom: 1.75rem; }
+        .pane-heading h2 { font-family: 'DM Serif Display', serif; font-size: 1.375rem; color: var(--text-primary); font-weight: 400; letter-spacing: -0.01em; }
+        .pane-heading p { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.5; }
+        .field { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.75rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.4rem; letter-spacing: 0.04em; text-transform: uppercase; }
+        input[type="text"], input[type="email"], input[type="password"] { width: 100%; height: 46px; padding: 0 1rem; background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.9375rem; color: var(--text-primary); outline: none; transition: border-color 0.18s, background 0.18s; -webkit-appearance: none; }
+        input::placeholder { color: #C2C0BB; }
+        input:hover { border-color: rgba(0,0,0,0.15); }
+        input:focus { border-color: var(--border-strong); background: #fff; }
+        .field-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.35rem; line-height: 1.4; }
+        .btn-primary { display: block; width: 100%; height: 48px; margin-top: 1.5rem; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.9375rem; font-weight: 500; letter-spacing: 0.01em; cursor: pointer; transition: opacity 0.18s, transform 0.12s; }
+        .btn-primary:hover { opacity: 0.88; }
+        .btn-primary:active { transform: scale(0.99); }
+        .link-center { display: block; text-align: center; margin-top: 1rem; font-size: 0.8125rem; color: var(--text-muted); text-decoration: none; transition: color 0.18s; }
+        .link-center:hover { color: var(--text-primary); }
+        .flash { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.8125rem; margin-bottom: 1.25rem; line-height: 1.4; }
+        .flash-error { background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; }
+        .flash-success { background: #F0FDF4; color: #166534; border: 1px solid #86EFAC; }
+        .footer-tag { text-align: center; margin-top: 1.75rem; font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.04em; display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+        .footer-tag svg { width: 11px; height: 11px; stroke: var(--text-muted); fill: none; stroke-width: 2; }
     </style>
 </head>
 <body>
-
-    <div class="container d-flex flex-column align-items-center">
-        
-        <div class="w-100" style="max-width: 450px;">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+<div class="wrapper">
+    <div class="brand">
+        <div class="brand-icon">
+            <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
         </div>
+        <div class="brand-title">Acesso Seguro</div>
+        <div class="brand-sub">Sistema de Segurança</div>
+    </div>
 
-        <div class="card shadow border-0 auth-card">
-            
-            <ul class="nav nav-tabs nav-fill" id="authTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login-pane" type="button" role="tab">Entrar</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register-pane" type="button" role="tab">Criar Conta</button>
-                </li>
-            </ul>
+    <div class="card">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="login">Entrar</button>
+            <button class="tab-btn" data-tab="register">Criar conta</button>
+        </div>
+        <div class="tab-content">
 
-            <div class="card-body p-4 p-md-5">
-                <div class="tab-content" id="authTabsContent">
-                    
-                    <div class="tab-pane fade show active" id="login-pane" role="tabpanel">
-                        <div class="text-center mb-4">
-                            <h4 class="fw-bold">Bem-vindo de volta!</h4>
-                            <p class="text-muted">Faça login para acessar o sistema seguro.</p>
-                        </div>
-                        
-                        <form method="POST" action="/">
-                            <input type="hidden" name="action" value="login">
-                            <div class="mb-3">
-                                <label for="login_username" class="form-label fw-semibold">Usuário</label>
-                                <input type="text" class="form-control form-control-lg bg-light" id="login_username" name="username" placeholder="Digite seu usuário" required>
-                            </div>
-                            <div class="mb-4">
-                                <label for="login_password" class="form-label fw-semibold">Senha</label>
-                                <input type="password" class="form-control form-control-lg bg-light" id="login_password" name="password" placeholder="Digite sua senha" required>
-                            </div>
-                            <div class="d-grid gap-2 mb-3">
-                                <button type="submit" class="btn btn-primary btn-lg fw-bold">Acessar Sistema</button>
-                            </div>
-                            <div class="text-center">
-                                <a href="{{ url_for('recuperar') }}" class="text-decoration-none text-muted small">Esqueci minha senha</a>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div class="tab-pane fade" id="register-pane" role="tabpanel">
-                        <div class="text-center mb-4">
-                            <h4 class="fw-bold">Nova Conta</h4>
-                            <p class="text-muted">Preencha os dados para se cadastrar.</p>
-                        </div>
-
-                        <form method="POST" action="/">
-                            <input type="hidden" name="action" value="register">
-                            <div class="mb-3">
-                                <label for="reg_username" class="form-label fw-semibold">Nome de Usuário</label>
-                                <input type="text" class="form-control bg-light" id="reg_username" name="username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="reg_email" class="form-label fw-semibold">E-mail</label>
-                                <input type="email" class="form-control bg-light" id="reg_email" name="email" placeholder="Para receber o código 2FA" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="reg_password" class="form-label fw-semibold">Senha Segura</label>
-                                <input type="password" class="form-control bg-light" id="reg_password" name="password" required>
-                                <div class="form-text mt-1 text-muted" style="font-size: 0.75rem;">
-                                    Mín. 8 caracteres, maiúsculas, minúsculas, números e símbolos (@, #, etc).
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label for="confirm_password" class="form-label fw-semibold">Repetir Senha</label>
-                                <input type="password" class="form-control bg-light" id="confirm_password" name="confirm_password" required>
-                            </div>
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-success btn-lg fw-bold">Criar Conta</button>
-                            </div>
-                        </form>
-                    </div>
-
+            <!-- Login -->
+            <div class="pane active" id="pane-login">
+                <div class="pane-heading">
+                    <h2>Bem-vindo de volta</h2>
+                    <p>Insira suas credenciais para acessar o sistema.</p>
                 </div>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endwith %}
+                <form method="POST" action="/">
+                    <input type="hidden" name="action" value="login">
+                    <div class="field">
+                        <label for="login_username">Usuário</label>
+                        <input type="text" id="login_username" name="username" placeholder="seu.usuario" autocomplete="username" required>
+                    </div>
+                    <div class="field">
+                        <label for="login_password">Senha</label>
+                        <input type="password" id="login_password" name="password" placeholder="••••••••" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Acessar sistema</button>
+                    <a href="/recuperar" class="link-center">Esqueci minha senha</a>
+                </form>
             </div>
+
+            <!-- Cadastro -->
+            <div class="pane" id="pane-register">
+                <div class="pane-heading">
+                    <h2>Nova conta</h2>
+                    <p>Preencha os dados para se cadastrar no sistema.</p>
+                </div>
+                <form method="POST" action="/">
+                    <input type="hidden" name="action" value="register">
+                    <div class="field">
+                        <label for="reg_username">Nome de usuário</label>
+                        <input type="text" id="reg_username" name="username" placeholder="seu.usuario" autocomplete="username" required>
+                    </div>
+                    <div class="field">
+                        <label for="reg_email">E-mail</label>
+                        <input type="email" id="reg_email" name="email" placeholder="voce@email.com" autocomplete="email" required>
+                        <div class="field-hint">Usado para verificação em dois fatores (2FA).</div>
+                    </div>
+                    <div class="field">
+                        <label for="reg_password">Senha</label>
+                        <input type="password" id="reg_password" name="password" placeholder="••••••••" autocomplete="new-password" required>
+                        <div class="field-hint">Mín. 8 caracteres — maiúsculas, minúsculas, números e símbolos.</div>
+                    </div>
+                    <div class="field">
+                        <label for="confirm_password">Confirmar senha</label>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" autocomplete="new-password" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Criar conta</button>
+                </form>
+            </div>
+
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="footer-tag">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Conexão protegida e criptografada
+    </div>
+</div>
+
+<script>
+    const tabs = document.querySelectorAll('.tab-btn');
+    const panes = document.querySelectorAll('.pane');
+    tabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const t = btn.dataset.tab;
+            tabs.forEach(b => b.classList.remove('active'));
+            panes.forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('pane-' + t).classList.add('active');
+        });
+    });
+</script>
 </body>
 </html>

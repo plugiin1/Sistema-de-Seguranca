@@ -3,22 +3,234 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Sistema Seguro</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Dashboard — Acesso Seguro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #F7F6F3; --surface: #FFFFFF; --border: rgba(0,0,0,0.08);
+            --border-med: rgba(0,0,0,0.12); --text-primary: #1A1917;
+            --text-muted: #8A8880; --accent: #1A1917; --input-bg: #FAFAF8;
+            --green-bg: #F0FDF4; --green-text: #166534; --green-border: #86EFAC;
+            --red-bg: #FEF2F2; --red-text: #991B1B; --red-border: #FCA5A5;
+            --amber-bg: #FFFBEB; --amber-text: #92400E; --amber-border: #FCD34D;
+        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+
+        /* Top nav */
+        .topnav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; height: 60px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+        .nav-brand { display: flex; align-items: center; gap: 0.75rem; }
+        .nav-icon { width: 34px; height: 34px; background: var(--accent); border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .nav-icon svg { width: 16px; height: 16px; stroke: white; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .nav-name { font-family: 'DM Serif Display', serif; font-size: 1.0625rem; color: var(--text-primary); letter-spacing: -0.01em; }
+        .nav-right { display: flex; align-items: center; gap: 1rem; }
+        .nav-user { font-size: 0.8125rem; color: var(--text-muted); }
+        .nav-user strong { color: var(--text-primary); font-weight: 500; }
+        .btn-logout { height: 34px; padding: 0 1rem; background: transparent; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.8125rem; color: var(--text-muted); cursor: pointer; transition: color 0.18s, border-color 0.18s; text-decoration: none; display: flex; align-items: center; gap: 0.375rem; }
+        .btn-logout:hover { color: var(--text-primary); border-color: var(--border-med); }
+        .btn-logout svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+        /* Page */
+        .page { max-width: 900px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+        .page-header { margin-bottom: 2rem; }
+        .page-header h1 { font-family: 'DM Serif Display', serif; font-size: 1.75rem; color: var(--text-primary); font-weight: 400; letter-spacing: -0.02em; }
+        .page-header p { font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+        /* Flash */
+        .flash { padding: 0.75rem 1rem; border-radius: 10px; font-size: 0.8125rem; margin-bottom: 1.5rem; line-height: 1.4; }
+        .flash-success { background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green-border); }
+        .flash-error { background: var(--red-bg); color: var(--red-text); border: 1px solid var(--red-border); }
+        .flash-warning { background: var(--amber-bg); color: var(--amber-text); border: 1px solid var(--amber-border); }
+
+        /* Stats row */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.25rem 1.5rem; }
+        .stat-label { font-size: 0.75rem; font-weight: 500; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .stat-value { font-family: 'DM Serif Display', serif; font-size: 1.75rem; color: var(--text-primary); letter-spacing: -0.02em; line-height: 1; }
+        .stat-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.4rem; }
+        .stat-badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.7rem; font-weight: 500; }
+        .badge-green { background: var(--green-bg); color: var(--green-text); }
+        .badge-amber { background: var(--amber-bg); color: var(--amber-text); }
+        .badge-red { background: var(--red-bg); color: var(--red-text); }
+
+        /* Cards grid */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } .stats { grid-template-columns: 1fr 1fr; } }
+
+        .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; }
+        .section-title { font-size: 0.8125rem; font-weight: 500; color: var(--text-muted); letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+        .section-title svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+        /* Activity list */
+        .activity-list { list-style: none; }
+        .activity-item { display: flex; align-items: flex-start; gap: 0.875rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+        .activity-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .activity-item:first-child { padding-top: 0; }
+        .activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+        .dot-green { background: #22C55E; }
+        .dot-red { background: #EF4444; }
+        .dot-amber { background: #F59E0B; }
+        .activity-text { flex: 1; }
+        .activity-text p { font-size: 0.875rem; color: var(--text-primary); line-height: 1.4; }
+        .activity-time { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+        /* Info rows */
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+        .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .info-row:first-child { padding-top: 0; }
+        .info-key { font-size: 0.8125rem; color: var(--text-muted); }
+        .info-val { font-size: 0.8125rem; color: var(--text-primary); font-weight: 500; }
+
+        /* Action buttons in card */
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.625rem; }
+        .action-btn { height: 44px; background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.8125rem; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none; transition: background 0.18s, border-color 0.18s; }
+        .action-btn:hover { background: #F0EEE9; border-color: rgba(0,0,0,0.13); }
+        .action-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .action-btn.danger { color: #991B1B; background: var(--red-bg); border-color: var(--red-border); }
+        .action-btn.danger:hover { background: #FEE2E2; }
+    </style>
 </head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <div class="card shadow-sm border-0">
-            <div class="card-body d-flex justify-content-between align-items-center">
-                <h3 class="mb-0 fw-bold">Bem-vindo, {{ username }}!</h3>
-                <a href="{{ url_for('logout') }}" class="btn btn-danger fw-bold">Sair do Sistema</a>
-            </div>
+<body>
+
+<!-- Top nav -->
+<nav class="topnav">
+    <div class="nav-brand">
+        <div class="nav-icon">
+            <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
         </div>
-        
-        <div class="mt-4 p-4 bg-white border rounded shadow-sm">
-            <h5 class="fw-bold">Status do Sistema</h5>
-            <p class="text-success mb-0 fw-semibold">✅ Autenticação multifator validada com sucesso. Você está em um ambiente seguro.</p>
+        <span class="nav-name">Acesso Seguro</span>
+    </div>
+    <div class="nav-right">
+        <span class="nav-user">Olá, <strong>{{ username if username else 'Usuário' }}</strong></span>
+        <a href="/logout" class="btn-logout">
+            <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Sair
+        </a>
+    </div>
+</nav>
+
+<!-- Page content -->
+<main class="page">
+
+    <div class="page-header">
+        <h1>Painel de segurança</h1>
+        <p>Visão geral da sua conta e atividade recente.</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    {% endwith %}
+
+    <!-- Stats -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-label">Status</div>
+            <div class="stat-value" style="font-size: 1.125rem; margin-top: 0.25rem;">
+                <span class="stat-badge badge-green">● Ativo</span>
+            </div>
+            <div class="stat-sub">Conta verificada</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Último acesso</div>
+            <div class="stat-value" style="font-size: 1rem; margin-top: 0.25rem; font-family: 'DM Sans', sans-serif; font-weight: 500;">{{ ultimo_acesso if ultimo_acesso else 'Agora' }}</div>
+            <div class="stat-sub">Sessão atual</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Autenticação</div>
+            <div class="stat-value" style="font-size: 1.125rem; margin-top: 0.25rem;">
+                <span class="stat-badge badge-green">2FA ativo</span>
+            </div>
+            <div class="stat-sub">E-mail verificado</div>
         </div>
     </div>
+
+    <div class="grid-2">
+
+        <!-- Activity log -->
+        <div class="section-card">
+            <div class="section-title">
+                <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                Atividade recente
+            </div>
+            <ul class="activity-list">
+                {% if atividades %}
+                    {% for a in atividades %}
+                    <li class="activity-item">
+                        <div class="activity-dot {% if a.tipo == 'login' %}dot-green{% elif a.tipo == 'falha' %}dot-red{% else %}dot-amber{% endif %}"></div>
+                        <div class="activity-text">
+                            <p>{{ a.descricao }}</p>
+                            <div class="activity-time">{{ a.data }}</div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                {% else %}
+                <li class="activity-item">
+                    <div class="activity-dot dot-green"></div>
+                    <div class="activity-text">
+                        <p>Login realizado com sucesso</p>
+                        <div class="activity-time">Agora</div>
+                    </div>
+                </li>
+                <li class="activity-item">
+                    <div class="activity-dot dot-green"></div>
+                    <div class="activity-text">
+                        <p>Verificação 2FA concluída</p>
+                        <div class="activity-time">Agora</div>
+                    </div>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <!-- Account info + actions -->
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div class="section-card">
+                <div class="section-title">
+                    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Informações da conta
+                </div>
+                <div class="info-row">
+                    <span class="info-key">Usuário</span>
+                    <span class="info-val">{{ username if username else '—' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">E-mail</span>
+                    <span class="info-val">{{ email if email else '—' }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-key">Conta criada</span>
+                    <span class="info-val">{{ criado_em if criado_em else '—' }}</span>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <div class="section-title">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                    Ações
+                </div>
+                <div class="action-grid">
+                    <a href="/alterar-senha" class="action-btn">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        Alterar senha
+                    </a>
+                    <a href="/configuracoes" class="action-btn">
+                        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        Configurações
+                    </a>
+                    <a href="/logout" class="action-btn danger" style="grid-column: span 2;">
+                        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        Encerrar sessão
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
 </body>
 </html>

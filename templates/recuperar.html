@@ -3,69 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recuperação de Senha</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh;">
-    <div class="card shadow-sm p-4" style="max-width: 450px; width: 100%;">
-        
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+    <title>Recuperar Conta — Acesso Seguro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #F7F6F3; --surface: #FFFFFF; --border: rgba(0,0,0,0.08);
+            --border-strong: rgba(0,0,0,0.25); --text-primary: #1A1917;
+            --text-muted: #8A8880; --accent: #1A1917; --input-bg: #FAFAF8;
+        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; -webkit-font-smoothing: antialiased; }
+        .wrapper { width: 100%; max-width: 400px; }
+        .brand { text-align: center; margin-bottom: 2.5rem; }
+        .brand-icon { width: 48px; height: 48px; margin: 0 auto 1rem; background: var(--accent); border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+        .brand-icon svg { width: 22px; height: 22px; stroke: white; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .brand-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text-primary); letter-spacing: -0.01em; }
+        .brand-sub { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.25rem; letter-spacing: 0.04em; text-transform: uppercase; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2rem 1.75rem; }
+        .pane-heading { margin-bottom: 1.75rem; }
+        .pane-heading h2 { font-family: 'DM Serif Display', serif; font-size: 1.375rem; color: var(--text-primary); font-weight: 400; letter-spacing: -0.01em; }
+        .pane-heading p { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.4rem; line-height: 1.5; }
+        .field { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.75rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.4rem; letter-spacing: 0.04em; text-transform: uppercase; }
+        input[type="text"], input[type="password"] { width: 100%; height: 46px; padding: 0 1rem; background: var(--input-bg); border: 1px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.9375rem; color: var(--text-primary); outline: none; transition: border-color 0.18s, background 0.18s; -webkit-appearance: none; }
+        input::placeholder { color: #C2C0BB; }
+        input:hover { border-color: rgba(0,0,0,0.15); }
+        input:focus { border-color: var(--border-strong); background: #fff; }
+        .field-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.35rem; line-height: 1.4; }
+        .btn-primary { display: block; width: 100%; height: 48px; margin-top: 1.5rem; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.9375rem; font-weight: 500; cursor: pointer; transition: opacity 0.18s, transform 0.12s; }
+        .btn-primary:hover { opacity: 0.88; }
+        .btn-primary:active { transform: scale(0.99); }
+        .link-center { display: block; text-align: center; margin-top: 1rem; font-size: 0.8125rem; color: var(--text-muted); text-decoration: none; transition: color 0.18s; }
+        .link-center:hover { color: var(--text-primary); }
+        .flash { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.8125rem; margin-bottom: 1.25rem; line-height: 1.4; }
+        .flash-error, .flash-danger { background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; }
+        .flash-success { background: #F0FDF4; color: #166534; border: 1px solid #86EFAC; }
+        .flash-info { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
 
-        <div class="text-center mb-4">
-            <h4 class="fw-bold">Recuperar Conta</h4>
+        .footer-tag { text-align: center; margin-top: 1.75rem; font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.04em; display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+        .footer-tag svg { width: 11px; height: 11px; stroke: var(--text-muted); fill: none; stroke-width: 2; }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="brand">
+        <div class="brand-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 2H3v16h5l4 4 4-4h5V2z"/><path d="M12 8v4M12 16h.01"/></svg>
+        </div>
+        <div class="brand-title">Recuperar conta</div>
+        <div class="brand-sub">Sistema de Segurança</div>
+    </div>
+
+    <div class="card">
+        <div id="formState">
             {% if not reset_mode %}
-                <p class="text-muted">Digite seu usuário para gerar o link de recuperação.</p>
+                <div class="pane-heading">
+                    <h2>Esqueceu a senha?</h2>
+                    <p>Digite seu usuário para receber o link e o código de recuperação.</p>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endwith %}
+
+                <form method="POST" action="/recuperar" id="recoveryForm">
+                    <div class="field">
+                        <label for="username">Nome de usuário</label>
+                        <input type="text" id="username" name="username" placeholder="seu.usuario" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Enviar link de recuperação</button>
+                    <a href="/" class="link-center">← Voltar ao login</a>
+                </form>
             {% else %}
-                <p class="text-muted">Insira o código enviado por e-mail e crie sua nova senha segura.</p>
+                <div class="pane-heading">
+                    <h2>Criar nova senha</h2>
+                    <p>Insira o código de 6 dígitos enviado por e-mail e sua nova senha.</p>
+                </div>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endwith %}
+
+                <form method="POST">
+                    <div class="field">
+                        <label for="otp_code">Código de Verificação (E-mail)</label>
+                        <input type="text" id="otp_code" name="otp_code" placeholder="000000" maxlength="6" required style="text-align: center; letter-spacing: 5px; font-weight: bold;">
+                    </div>
+                    <div class="field" style="margin-top: 1.5rem;">
+                        <label for="password">Nova Senha</label>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required>
+                        <div class="field-hint">Mín. 8 caracteres — maiúsculas, minúsculas, números e símbolos.</div>
+                    </div>
+                    <div class="field" style="margin-top: 1rem;">
+                        <label for="confirm_password">Confirmar Nova Senha</label>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn-primary" style="margin-top: 1.5rem;">Salvar Nova Senha</button>
+                    <a href="/" class="link-center">Cancelar</a>
+                </form>
             {% endif %}
         </div>
-        
-        {% if not reset_mode %}
-            <form method="POST">
-                <div class="mb-3">
-                    <label for="username" class="form-label fw-semibold">Nome de Usuário</label>
-                    <input type="text" class="form-control form-control-lg bg-light" id="username" name="username" required>
-                </div>
-                <button type="submit" class="btn btn-primary w-100 btn-lg fw-bold mb-3">Solicitar Link</button>
-                <div class="text-center">
-                    <a href="{{ url_for('login') }}" class="text-decoration-none text-muted">Voltar ao Login</a>
-                </div>
-            </form>
-        {% else %}
-            <form method="POST">
-                <div class="mb-4">
-                    <label for="otp_code" class="form-label fw-semibold text-primary">Código de Verificação</label>
-                    <input type="text" class="form-control form-control-lg text-center fw-bold bg-light border-primary" id="otp_code" name="otp_code" placeholder="000000" maxlength="6" required>
-                    <div class="form-text text-muted small">Verifique a caixa de entrada do seu e-mail.</div>
-                </div>
-                
-                <hr class="my-4">
-
-                <div class="mb-3">
-                    <label for="password" class="form-label fw-semibold">Nova Senha</label>
-                    <input type="password" class="form-control bg-light" id="password" name="password" required>
-                    <div class="form-text text-muted" style="font-size: 0.75rem;">
-                        Mín. 8 caracteres, maiúsculas, minúsculas, números e símbolos.
-                    </div>
-                </div>
-                
-                <div class="mb-4">
-                    <label for="confirm_password" class="form-label fw-semibold">Repetir Nova Senha</label>
-                    <input type="password" class="form-control bg-light" id="confirm_password" name="confirm_password" required>
-                </div>
-                <button type="submit" class="btn btn-success w-100 btn-lg fw-bold mb-3">Salvar Nova Senha</button>
-                <div class="text-center">
-                    <a href="{{ url_for('login') }}" class="text-decoration-none text-muted">Cancelar e voltar</a>
-                </div>
-            </form>
-        {% endif %}
-
     </div>
+
+    <div class="footer-tag">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Conexão protegida e criptografada
+    </div>
+</div>
 </body>
 </html>

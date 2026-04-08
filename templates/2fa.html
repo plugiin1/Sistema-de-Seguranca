@@ -3,33 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verificação de Segurança</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Verificação 2FA — Acesso Seguro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #F7F6F3; --surface: #FFFFFF; --border: rgba(0,0,0,0.08);
+            --border-strong: rgba(0,0,0,0.25); --text-primary: #1A1917;
+            --text-muted: #8A8880; --accent: #1A1917; --input-bg: #FAFAF8;
+        }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; -webkit-font-smoothing: antialiased; }
+        .wrapper { width: 100%; max-width: 400px; }
+        .brand { text-align: center; margin-bottom: 2.5rem; }
+        .brand-icon { width: 48px; height: 48px; margin: 0 auto 1rem; background: var(--accent); border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+        .brand-icon svg { width: 22px; height: 22px; stroke: white; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .brand-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text-primary); letter-spacing: -0.01em; }
+        .brand-sub { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.25rem; letter-spacing: 0.04em; text-transform: uppercase; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2rem 1.75rem; }
+        .pane-heading { margin-bottom: 1.75rem; text-align: center; }
+        .pane-heading h2 { font-family: 'DM Serif Display', serif; font-size: 1.375rem; color: var(--text-primary); font-weight: 400; letter-spacing: -0.01em; }
+        .pane-heading p { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.4rem; line-height: 1.5; }
+        .pane-heading strong { color: var(--text-primary); font-weight: 500; }
+
+        .otp-row { display: flex; gap: 0.625rem; justify-content: center; margin: 1.75rem 0; }
+        .otp-digit {
+            width: 52px; height: 58px; border: 1px solid var(--border);
+            border-radius: 12px; background: var(--input-bg);
+            font-family: 'DM Serif Display', serif; font-size: 1.5rem;
+            color: var(--text-primary); text-align: center; outline: none;
+            transition: border-color 0.18s, background 0.18s; -webkit-appearance: none;
+            caret-color: transparent;
+        }
+        .otp-digit:focus { border-color: var(--border-strong); background: #fff; }
+        input[type="hidden"] { display: none; }
+        .timer { text-align: center; font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+        .timer span { font-weight: 500; color: var(--text-primary); }
+
+        .btn-primary { display: block; width: 100%; height: 48px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.9375rem; font-weight: 500; cursor: pointer; transition: opacity 0.18s, transform 0.12s; }
+        .btn-primary:hover { opacity: 0.88; }
+        .btn-primary:active { transform: scale(0.99); }
+        .btn-ghost { display: block; width: 100%; height: 44px; margin-top: 0.75rem; background: transparent; color: var(--text-muted); border: 1px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; cursor: pointer; transition: color 0.18s, border-color 0.18s; }
+        .btn-ghost:hover { color: var(--text-primary); border-color: rgba(0,0,0,0.18); }
+
+        .flash { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.8125rem; margin-bottom: 1.25rem; line-height: 1.4; }
+        .flash-error { background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; }
+        .flash-success { background: #F0FDF4; color: #166534; border: 1px solid #86EFAC; }
+
+        .link-center { display: block; text-align: center; margin-top: 1rem; font-size: 0.8125rem; color: var(--text-muted); text-decoration: none; transition: color 0.18s; }
+        .link-center:hover { color: var(--text-primary); }
+        .footer-tag { text-align: center; margin-top: 1.75rem; font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.04em; display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+        .footer-tag svg { width: 11px; height: 11px; stroke: var(--text-muted); fill: none; stroke-width: 2; }
+    </style>
 </head>
-<body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh;">
-    <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
-        
+<body>
+<div class="wrapper">
+    <div class="brand">
+        <div class="brand-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="brand-title">Verificação</div>
+        <div class="brand-sub">Autenticação em dois fatores</div>
+    </div>
+
+    <div class="card">
+        <div class="pane-heading">
+            <h2>Código de acesso</h2>
+            <p>Enviamos um código de 6 dígitos para<br><strong>seu e-mail cadastrado</strong></p>
+        </div>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
         {% endwith %}
 
-        <h4 class="text-center fw-bold mb-3">Verificação em 2 Etapas</h4>
-        <p class="text-center text-muted mb-4">Enviamos um código de 6 dígitos para o seu e-mail. Ele expira em 10 minutos.</p>
-        
-        <form method="POST" action="/2fa">
-            <div class="mb-3">
-                <input type="text" class="form-control form-control-lg text-center fw-bold" name="otp_code" placeholder="000000" maxlength="6" required>
+        <form method="POST" action="/2fa" id="otpForm">
+            <div class="otp-row" id="otpRow">
+                <input class="otp-digit" type="text" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                <input class="otp-digit" type="text" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                <input class="otp-digit" type="text" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                <input class="otp-digit" type="text" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                <input class="otp-digit" type="text" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                <input class="otp-digit" type="text" maxlength="1" pattern="[0-9]" inputmode="numeric">
             </div>
-            <button type="submit" class="btn btn-primary w-100 btn-lg fw-bold">Verificar Código</button>
+            
+            <input type="hidden" name="otp_code" id="otpValue">
+
+            <div class="timer">Código válido por <span id="countdown">10:00</span></div>
+
+            <button type="submit" class="btn-primary">Verificar e entrar</button>
+            <button type="button" class="btn-ghost" onclick="window.location.href='/login'">Cancelar</button>
         </form>
-        
-        <div class="text-center mt-3">
-            <a href="{{ url_for('logout') }}" class="text-danger text-decoration-none small">Cancelar e voltar ao login</a>
-        </div>
+
+        <a href="/" class="link-center">← Voltar ao login</a>
     </div>
+
+    <div class="footer-tag">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Conexão protegida e criptografada
+    </div>
+</div>
+
+<script>
+    const digits = document.querySelectorAll('.otp-digit');
+    const otpValue = document.getElementById('otpValue');
+
+    function updateHidden() {
+        otpValue.value = Array.from(digits).map(d => d.value).join('');
+    }
+
+    digits.forEach((d, i) => {
+        d.addEventListener('input', e => {
+            const v = e.target.value.replace(/\D/g, '');
+            d.value = v.slice(-1);
+            updateHidden();
+            if (v && i < digits.length - 1) digits[i + 1].focus();
+        });
+        d.addEventListener('keydown', e => {
+            if (e.key === 'Backspace' && !d.value && i > 0) digits[i - 1].focus();
+        });
+        d.addEventListener('paste', e => {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+            paste.split('').slice(0, 6).forEach((ch, j) => { if (digits[j]) digits[j].value = ch; });
+            updateHidden();
+            const next = Math.min(paste.length, 5);
+            if(digits[next]) digits[next].focus();
+        });
+    });
+</script>
 </body>
 </html>

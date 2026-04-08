@@ -3,33 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ativar Conta</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Ativar Conta — Acesso Seguro</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --bg: #F7F6F3; --surface: #FFFFFF; --border: rgba(0,0,0,0.08); --border-strong: rgba(0,0,0,0.25); --text-primary: #1A1917; --text-muted: #8A8880; --accent: #1A1917; --input-bg: #FAFAF8; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+        .wrapper { width: 100%; max-width: 400px; }
+        .brand { text-align: center; margin-bottom: 2.5rem; }
+        .brand-icon { width: 48px; height: 48px; margin: 0 auto 1rem; background: var(--accent); border-radius: 14px; display: flex; align-items: center; justify-content: center; }
+        .brand-icon svg { width: 22px; height: 22px; stroke: white; fill: none; stroke-width: 1.8; }
+        .brand-title { font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text-primary); }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 2.5rem 1.75rem; text-align: center; }
+        .pane-heading h2 { font-family: 'DM Serif Display', serif; font-size: 1.375rem; color: var(--text-primary); font-weight: 400; }
+        .pane-heading p { font-size: 0.8125rem; color: var(--text-muted); margin-top: 0.4rem; line-height: 1.5; }
+        .otp-row { display: flex; gap: 0.625rem; justify-content: center; margin: 1.75rem 0; }
+        .otp-digit { width: 52px; height: 58px; border: 1px solid var(--border); border-radius: 12px; background: var(--input-bg); font-family: 'DM Serif Display', serif; font-size: 1.5rem; color: var(--text-primary); text-align: center; outline: none; }
+        .otp-digit:focus { border-color: var(--border-strong); background: #fff; }
+        input[type="hidden"] { display: none; }
+        .btn-primary { display: block; width: 100%; height: 48px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 0.9375rem; font-weight: 500; cursor: pointer; }
+        .link-center { display: block; text-align: center; margin-top: 1rem; font-size: 0.8125rem; color: var(--text-muted); text-decoration: none; }
+        .flash { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.8125rem; margin-bottom: 1.25rem; text-align: left; }
+        .flash-error { background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; }
+        .flash-success { background: #F0FDF4; color: #166534; border: 1px solid #86EFAC; }
+    </style>
 </head>
-<body class="bg-light d-flex align-items-center justify-content-center" style="min-height: 100vh;">
-    <div class="card shadow-sm p-4" style="max-width: 400px; width: 100%;">
-        
+<body>
+<div class="wrapper">
+    <div class="brand">
+        <div class="brand-icon">
+            <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="brand-title">Ativação de conta</div>
+    </div>
+
+    <div class="card">
+        <div class="pane-heading">
+            <h2>Verifique seu E-mail</h2>
+            <p>Digite o código de 6 dígitos que enviamos para validar seu cadastro.</p>
+        </div>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
         {% endwith %}
 
-        <h4 class="text-center fw-bold mb-3">Verifique seu E-mail</h4>
-        <p class="text-center text-muted mb-4">Para concluir o cadastro, digite o código de 6 dígitos que acabamos de enviar para você.</p>
-        
         <form method="POST" action="/ativar_conta">
-            <div class="mb-3">
-                <input type="text" class="form-control form-control-lg text-center fw-bold" name="otp_code" placeholder="000000" maxlength="6" required>
+            <div class="otp-row">
+                <input class="otp-digit" type="text" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                <input class="otp-digit" type="text" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                <input class="otp-digit" type="text" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                <input class="otp-digit" type="text" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                <input class="otp-digit" type="text" maxlength="1" pattern="[0-9]" inputmode="numeric">
+                <input class="otp-digit" type="text" maxlength="1" pattern="[0-9]" inputmode="numeric">
             </div>
-            <button type="submit" class="btn btn-success w-100 btn-lg fw-bold">Confirmar e Criar Conta</button>
+            <input type="hidden" name="otp_code" id="otpValue">
+
+            <button type="submit" class="btn-primary">Confirmar e Criar Conta</button>
         </form>
-        
-        <div class="text-center mt-3">
-            <a href="{{ url_for('login') }}" class="text-danger text-decoration-none small">Cancelar cadastro</a>
-        </div>
+        <a href="/" class="link-center">Cancelar e voltar</a>
     </div>
+</div>
+
+<script>
+    const digits = document.querySelectorAll('.otp-digit');
+    const otpValue = document.getElementById('otpValue');
+    function updateHidden() { otpValue.value = Array.from(digits).map(d => d.value).join(''); }
+    digits.forEach((d, i) => {
+        d.addEventListener('input', e => {
+            const v = e.target.value.replace(/\D/g, ''); d.value = v.slice(-1); updateHidden();
+            if (v && i < digits.length - 1) digits[i + 1].focus();
+        });
+        d.addEventListener('keydown', e => { if (e.key === 'Backspace' && !d.value && i > 0) digits[i - 1].focus(); });
+    });
+</script>
 </body>
 </html>
