@@ -1,3 +1,5 @@
+import os
+import json
 from flask import Flask, render_template, request, session, redirect, url_for, flash
 import bcrypt
 import secrets
@@ -21,14 +23,21 @@ SENHA_APP = 'pxqf aaat uewd yuwx'
 
 # --- INICIALIZAÇÃO DO FIREBASE ---
 try:
-    cred = credentials.Certificate("firebase-key.json")
+    # Tenta pegar a chave pelas variáveis de ambiente do Vercel
+    firebase_json_string = os.environ.get('FIREBASE_JSON')
+    
+    if firebase_json_string:
+        # Se achou a variável (está rodando no Vercel)
+        cred_dict = json.loads(firebase_json_string)
+        cred = credentials.Certificate(cred_dict)
+    else:
+        # Se não achou (está rodando no seu computador local)
+        cred = credentials.Certificate("firebase-key.json")
+        
     firebase_admin.initialize_app(cred)
     db = firestore.client()
 except Exception as e:
     print(f"Erro ao conectar com o Firebase: {e}")
-
-logging.basicConfig(filename='security_audit.log', level=logging.INFO, 
-                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 # --- FUNÇÕES AUXILIARES DE SEGURANÇA ---
 def is_password_strong(password):
