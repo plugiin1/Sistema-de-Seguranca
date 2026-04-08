@@ -24,12 +24,3 @@ Este repositório contém o código-fonte do meu **Projeto de Final de Curso (PF
 > - `![Tela de Login](caminho/para/login.png)`
 > - `![Tela de 2FA](caminho/para/2fa.png)`
 > - `![Dashboard](caminho/para/dashboard.png)`
-
-## 🚀 Como rodar o projeto localmente
-
-Siga os passos abaixo para testar o sistema no seu próprio computador:
-
-### 1. Baixe o projeto e instale as bibliotecas
-Abra o terminal na pasta do projeto e instale as dependências necessárias executando:
-```bash
-pip install -r requirements.txt
