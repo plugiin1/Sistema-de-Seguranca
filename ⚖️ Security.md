@@ -1,7 +1,7 @@
-## ⚖️ Conformidade e Segurança (LGPD)
+# ⚖️ Conformidade e Segurança (LGPD)
 Este projeto foi desenvolvido com foco em robustez criptográfica e rastreabilidade, atendendo aos requisitos de proteção de dados pessoais.
 
-# 1. Inventário e Registro de Operações (ROPA)
+## 1. Inventário e Registro de Operações (ROPA)
 • Dados Coletados: E-mail e Senha.
 
 • Finalidade: Autenticação segura e controle de acesso ao dashboard.
@@ -10,7 +10,7 @@ Este projeto foi desenvolvido com foco em robustez criptográfica e rastreabilid
 
 • Fluxo de Dados: Coleta via Flask > Hashing via bcrypt > Armazenamento no Firebase.
 
-#2. Política de Segurança da Informação (PSI)
+## 2. Política de Segurança da Informação (PSI)
 A infraestrutura do sistema adota medidas técnicas rigorosas para impedir acessos não autorizados:
 
 • Criptografia de Senhas: Uso do algoritmo bcrypt para garantir que senhas nunca sejam armazenadas em texto puro.
@@ -21,7 +21,7 @@ A infraestrutura do sistema adota medidas técnicas rigorosas para impedir acess
 
 • Hospedagem Segura: Deploy realizado via Vercel com isolamento de segredos no painel administrativo do servidor.
 
-#3. Relatório de Impacto à Proteção de Dados (RIPD)
+## 3. Relatório de Impacto à Proteção de Dados (RIPD)
 Identificamos e mitigamos riscos de privacidade através das seguintes ações:
 
 • Risco: Acesso indevido por descoberta de senha.
@@ -32,7 +32,7 @@ Identificamos e mitigamos riscos de privacidade através das seguintes ações:
 
 • Mitigação: Uso de hashes não reversíveis para senhas, tornando os dados inúteis para invasores.
 
-#4. Políticas e Termos (Resumo)
+## 4. Políticas e Termos (Resumo)
 • Privacidade: Coletamos o mínimo necessário (e-mail) para a operação do sistema.
 
 • Cookies: Utilizamos apenas cookies de sessão estritamente necessários para manter a integridade da navegação após o login.
