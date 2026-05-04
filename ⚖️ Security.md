@@ -1,6 +1,8 @@
 # ⚖️ Conformidade e Segurança (LGPD)
 Este projeto foi desenvolvido com foco em robustez criptográfica e rastreabilidade, atendendo aos requisitos de proteção de dados pessoais.
 
+--- 
+
 ## 1. Inventário e Registro de Operações (ROPA)
 • Dados Coletados: E-mail e Senha.
 
