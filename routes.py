@@ -195,7 +195,7 @@ def recuperar():
             user_data = user_doc.to_dict()
             import secrets as sec
             token = sec.token_urlsafe(32)
-            expires = datetime.now(timezone.utc) + timedelta(minutes=15)
+            expires = datetime.now(timezone.utc) + timedelta(minutes=10)
             codigo = sec_service.generate_otp()
             
             # Requisito 2.6: Registro de solicitação em Log
