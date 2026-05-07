@@ -278,9 +278,10 @@ def logout():
 
 @auth_bp.route('/dashboard')
 def dashboard():
-    # Proteção de rota
+    # Se o usuário não estiver na sessão, ele é barrado aqui
     if 'username' not in session:
         logging.warning("Tentativa de acesso não autorizado ao dashboard.")
+        flash("Sessão expirada. Faça login novamente.", "warning")
         return redirect(url_for('auth.login'))
         
     return render_template('dashboard.html', username=session['username'])

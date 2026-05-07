@@ -52,6 +52,17 @@ def create_app():
     # Registro de Blueprints
     app.register_blueprint(auth_bp)
 
+    @app.after_request
+    def add_header(response):
+        """
+        Garante que o navegador não armazene cache das páginas.
+        Essencial para que o botão 'voltar' não acesse áreas logadas após o logout.
+        """
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+
     return app
 
 app = create_app()
