@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, request, session, redirect, url_fo
 from markupsafe import Markup
 from services import SecurityService, DatabaseService, EmailService
 
-# Criamos o Blueprint para as rotas de autenticação
+# Criação o Blueprint para as rotas de autenticação
 auth_bp = Blueprint('auth', __name__)
 
 def get_services():
@@ -19,13 +19,13 @@ def login():
     db_service, sec_service, mail_service = get_services()
     db = db_service.db
     
-    # Requisito 1.11: Proteção contra Força Bruta
+    # Proteção contra Força Bruta
     if request.method == 'POST':
         action = request.form.get('action')
         username = request.form.get('username')
         password = request.form.get('password')
 
-        # --- FLUXO DE CADASTRO ---
+        # FLUXO DE CADASTRO
         if action == 'register':
             email = request.form.get('email')
             confirm_password = request.form.get('confirm_password')
@@ -47,7 +47,7 @@ def login():
             exp = datetime.now(timezone.utc) + timedelta(minutes=10)
             
             if mail_service.send_code(email, codigo, "Ative sua conta - Sistema Seguro"):
-                # Registro em Log de Auditoria (Requisito 5.1)
+                # Registro em Log de Auditoria
                 logging.info(f"Novo pré-cadastro realizado: {username} | E-mail: {email}")
                 
                 db.collection('pending_users').document(username).set({
@@ -65,7 +65,7 @@ def login():
                 flash('Erro ao enviar e-mail. Tente novamente.', 'danger')
                 return redirect(url_for('auth.login'))
 
-        # --- FLUXO DE LOGIN ---
+        # FLUXO DE LOGIN
         elif action == 'login':
             user_ref = db.collection('users').document(username)
             user_doc = user_ref.get()
@@ -73,14 +73,14 @@ def login():
             if user_doc.exists:
                 data = user_doc.to_dict()
                 
-                # Verificação de bloqueio temporário (Req 1.11)
+                # Verificação de bloqueio temporário
                 if time.time() < data.get('lock_until', 0):
                     logging.warning(f"Tentativa de acesso em conta bloqueada: {username}")
                     flash('Conta bloqueada temporariamente devido a múltiplas falhas.', 'danger')
                     return render_template('login.html')
 
                 if sec_service.verify_password(password, data['password_hash']):
-                    # Sucesso na Autenticação Primária (Req 5.1)
+                    # Sucesso na Autenticação Primária
                     logging.info(f"Sucesso: Autenticação primária concluída para o usuário: {username}")
                     
                     user_ref.update({'failed_attempts': 0}) # Reseta tentativas
@@ -92,7 +92,7 @@ def login():
                     session['temp_username'] = username
                     return redirect(url_for('auth.verify_2fa')) 
                 
-                # Lógica de Falha e Penalização (Req 1.11 / 5.2)
+                # Lógica de Falha e Penalização
                 falhas = data.get('failed_attempts', 0) + 1
                 logging.warning(f"Falha de senha para usuário: {username}. Tentativa: {falhas}")
                 
@@ -167,7 +167,7 @@ def verify_2fa():
         expiracao = user_data.get('expiracao_2fa')
         
         if codigo_salvo and expiracao and datetime.now(timezone.utc) <= expiracao and otp_digitado == codigo_salvo:
-            # Requisito 2.4: Invalidação do código após uso único
+            # Invalidação do código após uso único
             user_ref.update({'codigo_2fa': None, 'expiracao_2fa': None})
             
             logging.info(f"Sucesso: 2FA validado para o usuário: {username}")
@@ -198,7 +198,7 @@ def recuperar():
             expires = datetime.now(timezone.utc) + timedelta(minutes=10)
             codigo = sec_service.generate_otp()
             
-            # Requisito 2.6: Registro de solicitação em Log
+            # Registro de solicitação em Log
             logging.info(f"Solicitação de recuperação de senha iniciada para: {username}")
             
             mail_service.send_code(user_data['email'], codigo, "Recuperação de Senha")
@@ -229,7 +229,7 @@ def reset_password(token):
         
     token_data = token_doc.to_dict()
     
-    # Requisito 2.3: Token com tempo de expiração
+    # Token com tempo de expiração
     if datetime.now(timezone.utc) > token_data['expires_at']:
         token_ref.delete()
         flash('Este link de recuperação expirou.', 'danger')
@@ -253,11 +253,11 @@ def reset_password(token):
             flash('A nova senha não atende aos requisitos de força.', 'danger')
             return render_template('recuperar.html', reset_mode=True)
         
-        # Requisito 1.1: Uso de hash seguro para a nova senha
+        # Uso de hash seguro para a nova senha
         new_hash = sec_service.hash_password(new_password)
         db.collection('users').document(username).update({'password_hash': new_hash})
         
-        # Requisito 2.4: Token invalidado após uso único
+        # Token invalidado após uso único
         token_ref.delete()
         
         logging.info(f"Sucesso: Senha redefinida para o usuário: {username}")
@@ -269,7 +269,7 @@ def reset_password(token):
 @auth_bp.route('/logout')
 def logout():
     user = session.get('username')
-    # Requisito 1.10: Invalidação de sessão no logout
+    # Invalidação de sessão no logout
     session.clear() 
     if user:
         logging.info(f"Sessão encerrada manualmente para o usuário: {user}")
@@ -278,7 +278,7 @@ def logout():
 
 @auth_bp.route('/dashboard')
 def dashboard():
-    # Requisito de proteção de rota
+    # Proteção de rota
     if 'username' not in session:
         logging.warning("Tentativa de acesso não autorizado ao dashboard.")
         return redirect(url_for('auth.login'))

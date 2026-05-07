@@ -9,7 +9,7 @@ class Config:
     # Chave mestra para sessões
     SECRET_KEY = os.environ.get('FLASK_SECRET_KEY', 'chave-estática-local-segura')
     
-    # Segurança de Cookies (Essencial para Cybersecurity)
+    # Segurança de Cookies
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'

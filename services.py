@@ -3,7 +3,7 @@ import secrets
 import smtplib
 import re
 from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart # <-- Nova importação aqui
+from email.mime.multipart import MIMEMultipart 
 from datetime import datetime, timezone
 from config import Config
 
@@ -106,7 +106,7 @@ class EmailService:
         # Monta a estrutura do e-mail que aceita HTML
         msg = MIMEMultipart('alternative')
         msg['Subject'] = assunto
-        msg['From'] = f"Sistema Seguro <{Config.EMAIL_REMETENTE}>" # Deixa o remetente mais bonito
+        msg['From'] = f"Sistema Seguro <{Config.EMAIL_REMETENTE}>" 
         msg['To'] = destinatario
 
         # Gera o HTML e anexa na mensagem

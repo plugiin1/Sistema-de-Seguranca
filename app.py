@@ -1,8 +1,8 @@
 import os
 import json
-import logging # Requisito de Auditoria
+import logging 
 from flask import Flask
-from flask_limiter import Limiter # Requisito Força Bruta
+from flask_limiter import Limiter 
 from flask_limiter.util import get_remote_address
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -14,15 +14,15 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    # --- 1. CONFIGURAÇÃO DE LOGS (Req 5.1, 5.2) ---
-    # Isso cria o arquivo security_audit.log que você tem no .gitignore
+    # CONFIGURAÇÃO DE LOGS 
+
     logging.basicConfig(
         filename='security_audit.log',
         level=logging.INFO,
         format='%(asctime)s %(levelname)s: %(message)s'
     )
 
-    # --- 2. PROTEÇÃO CONTRA FORÇA BRUTA (Req 1.11) ---
+    # PROTEÇÃO CONTRA FORÇA BRUTA 
     # Limita o número de requisições para evitar ataques automatizados
     limiter = Limiter(
         get_remote_address,
@@ -57,5 +57,5 @@ def create_app():
 app = create_app()
 
 if __name__ == '__main__':
-    # ssl_context='adhoc' garante HTTPS local (Req 3.1)
+    # ssl_context='adhoc' garante HTTPS local
     app.run(debug=True, ssl_context='adhoc', port=5000)
